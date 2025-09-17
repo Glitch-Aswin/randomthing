@@ -12,6 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);
+  const [reveal, setReveal] = useState(false);
 
   const handleComplete = () => {
     setShowPassword(true);
@@ -54,29 +55,44 @@ export default function Home() {
         <CrosswordPuzzle onComplete={handleComplete} />
 
         {showPassword && (
-          <div className="mt-6 max-w-md p-4 rounded-lg border shadow-sm bg-white">
-            <h3 className="font-semibold text-lg mb-2">Enter the password to proceed</h3>
-            <form onSubmit={submitPassword} className="flex gap-2 items-start">
-              <input
-                ref={inputRef}
-                type="password"
-                className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-label="Password"
-                autoComplete="off"
-              />
+          <div className="mt-6 max-w-md w-full p-4 rounded-lg border shadow-sm bg-white">
+            <h3 className="font-semibold text-lg mb-3">Enter the password to proceed</h3>
+            <form onSubmit={submitPassword} className="flex flex-col sm:flex-row gap-2 sm:items-stretch">
+              <div className="flex-1 flex gap-2">
+                <input
+                  ref={inputRef}
+                  type={reveal ? 'text' : 'password'}
+                  className={`flex-1 border rounded px-3 py-2 min-h-[42px] focus:outline-none focus:ring-2 ${error ? 'focus:ring-red-400 border-red-300' : 'focus:ring-orange-400 border-gray-300'}`}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-label="Password"
+                  aria-invalid={Boolean(error)}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReveal((v) => !v)}
+                  className="px-3 py-2 min-h-[42px] rounded border bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  aria-pressed={reveal}
+                  aria-label={reveal ? 'Hide password' : 'Show password'}
+                >
+                  {reveal ? 'Hide' : 'Show'}
+                </button>
+              </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 rounded bg-orange-600 text-black font-medium disabled:opacity-60"
+                className="px-4 py-2 min-h-[42px] rounded bg-orange-600 text-black font-medium disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                {loading && (
+                  <span className="inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" aria-hidden="true" />
+                )}
                 {loading ? 'Checking…' : 'Submit'}
               </button>
             </form>
-            {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-            <p className="text-xs text-gray-500 mt-2">Your answer is verified on the server.</p>
+            {error && <p className="text-red-600 text-sm mt-2" role="alert" aria-live="polite">{error}</p>}
+            <p className="text-xs text-gray-500 mt-2">Your answer is verified on the server. Press Enter to submit.</p>
           </div>
         )}
       </section>
