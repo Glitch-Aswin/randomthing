@@ -62,7 +62,7 @@ export default function Home() {
                 <input
                   ref={inputRef}
                   type={reveal ? 'text' : 'password'}
-                  className={`flex-1 border rounded px-3 py-2 min-h-[42px] focus:outline-none focus:ring-2 ${error ? 'focus:ring-red-400 border-red-300' : 'focus:ring-orange-400 border-gray-300'}`}
+                  className={`flex-1 border rounded px-3 py-2 min-h-[42px] focus:outline-none focus:ring-2 bg-white text-gray-900 placeholder:text-gray-500 caret-orange-600 ${error ? 'focus:ring-red-400 border-red-300' : 'focus:ring-orange-400 border-gray-300'}`}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
