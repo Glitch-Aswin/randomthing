@@ -70,7 +70,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 rounded bg-orange-600 text-white font-medium disabled:opacity-60"
+                className="px-4 py-2 rounded bg-orange-600 text-black font-medium disabled:opacity-60"
               >
                 {loading ? 'Checking…' : 'Submit'}
               </button>
