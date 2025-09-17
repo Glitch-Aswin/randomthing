@@ -142,7 +142,7 @@ export default function CrosswordPuzzle({ onComplete }) {
   useEffect(() => {
     solutionRef.current = solution;
     activeSetRef.current = activeSet;
-  }, [solution, activeSet]);
+  }, [solution, activeSet, solutionRef, activeSetRef]);
 
   // After solved, explicitly highlight the requested letters so they appear reliably.
   // Requested: Y of STRATEGY, A of STARTUP, one F of BUFFETT, O of MICROSOFT, and L of LEVERAGE
@@ -160,7 +160,7 @@ export default function CrosswordPuzzle({ onComplete }) {
     }
 
     setHighlightKeys(keys);
-  }, [solved]);
+  }, [solved, solutionRef, activeSetRef]);
 
   const handleChange = (row, col, e) => {
     const val = (e.target.value || "").toUpperCase().slice(0, 1);

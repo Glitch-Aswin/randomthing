@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export default function LockScreen() {
   const [password, setPassword] = useState('')
@@ -47,14 +48,14 @@ export default function LockScreen() {
   return (
     <div className="lockscreen overlay">
       <div className="glass-card">
-        <img src="/padlock.svg" className="padlock" alt="Locked" />
+  <Image src="/padlock.svg" width={56} height={56} className="padlock" alt="Locked" />
         <h1 className="title">THE HUNT BEGINS</h1>
         <p className="subtitle">Solve to discover what awaits you at the end</p>
 
         <div className="challenge">
           <span className="hint-label">Your first challenge:</span>
           <div className="hint-text">
-            In PIE what does the letter "I" stand for?
+            In PIE what does the letter &quot;I&quot; stand for?
           </div>
         </div>
 

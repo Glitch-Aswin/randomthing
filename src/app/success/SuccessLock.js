@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 
 export default function SuccessLock() {
   const [password, setPassword] = useState('')
@@ -38,7 +39,7 @@ export default function SuccessLock() {
   return (
     <div className="lockscreen overlay">
       <div className="glass-card">
-        <img src="/padlock.svg" className="padlock" alt="Locked" />
+        <Image src="/padlock.svg" width={56} height={56} className="padlock" alt="Locked" />
         <h1 className="title">TRESPASS CHECKING!</h1>
         <p className="subtitle">Enter the secret you figured out before, just to make you are not tresspassing over this page ^_^</p>
 
