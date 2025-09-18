@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function SuccessLock() {
   const [password, setPassword] = useState('')
@@ -44,7 +45,7 @@ export default function SuccessLock() {
   <p className="subtitle">This page unlocks only after solving the crossword. Return to the puzzle and complete it to proceed.</p>
 
         <form onSubmit={handleSubmit} className="form">
-          <a href="/" className="submit">Go to Puzzle</a>
+          <Link href="/" className="submit">Go to Puzzle</Link>
         </form>
 
         {error ? <p className="error">{error}</p> : null}
