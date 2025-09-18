@@ -137,3 +137,59 @@ body, html {
   .submit { width: 100%; }
   .password-input { letter-spacing: 0.12em; }
 }
+
+/* Responsive crossword grid tweaks */
+.crossword-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.crossword-cell {
+  background: #fff0; /* let inner cell control bg */
+  display: block;
+}
+
+.crossword-cell > div { /* inner cell wrapper (CrosswordCell) */
+  width: 100%;
+  height: 100%;
+}
+
+/* make inputs scale with cell using a CSS variable that clamps by viewport */
+.crossword-cell input {
+  /* font-size from var(--cell) set inline; keep here as fallback */
+  font-size: 18px;
+}
+
+@media (max-width: 420px) {
+  .crossword-grid { gap: 4px; }
+}
+
+/* Visual polish for crossword cells */
+.cell-root {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.crossword-grid { 
+  background: #f8f9fa; 
+  padding: 8px; 
+  border-radius: 6px; 
+}
+
+.cell-number { pointer-events: none; user-select: none; }
+
+/* Make clue numbers scale with cell size */
+.crossword-cell .cell-number {
+  font-size: calc(var(--cell) * 0.18) !important;
+  line-height: 1;
+  padding: 0 0.25em !important;
+}
+
+@media (max-width: 420px) {
+  .crossword-cell .cell-number {
+    font-size: calc(var(--cell) * 0.16) !important;
+  }
+}

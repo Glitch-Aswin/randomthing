@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 // Strict 10 rows x 12 cols matrix (rows: 0..9, cols: 0..11)
 const MATRIX_ROWS = 10;
@@ -33,9 +33,7 @@ const CLUE_TEXTS = {
   across: {
     1: "Which financial ratio indicates the extent to which a company uses debt to finance assets?",
     3: 'The "Oracle of Omaha"',
-    5: "This entrepreneur's Sneaker resale empire made Wall Street sweat",
-    7: "His garage startup redefined personal computing",
-  },
+  }
 };
 
 function deriveDirection([r1, c1], [r2, c2]) {
@@ -64,50 +62,52 @@ function expandEntries(entries) {
   return out;
 }
 
-function CrosswordCell({ number, value, onChange, isActive, isCorrect, isHighlighted }) {
+function CrosswordCell({ dataKey, number, value, onChange, isActive, isHighlighted, inputRef, onKeyDown }) {
+  const baseBg = isActive ? 'bg-white border-2 border-gray-800' : 'bg-gray-800 border-2 border-gray-700';
+  const highlightBg = isHighlighted ? 'bg-yellow-100 border-2 border-yellow-400' : baseBg;
+
   return (
     <div
-      className={`border-2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex flex-col text-xs relative ${
-        isHighlighted
-          ? "bg-yellow-100 border-yellow-400"
-          : isActive
-          ? "bg-white border-gray-400 shadow-sm"
-          : "bg-gray-800 border-gray-600"
-      }`}
+      data-key={dataKey}
+      className={`cell-root relative flex items-center justify-center text-xs ${highlightBg}`}
+      style={{ minHeight: '100%', minWidth: '100%' }}
     >
       {number && (
-        <span className="absolute top-0.5 left-1 text-[10px] sm:text-xs font-bold text-orange-600 bg-white rounded-sm px-0.5 z-10">
+        <span
+          className="cell-number pointer-events-none select-none absolute top-0.5 left-0.5 font-bold text-xs text-gray-800 bg-white rounded-sm px-1 z-10"
+        >
           {number}
         </span>
       )}
+
       {isActive ? (
         <input
+          ref={inputRef}
           maxLength={1}
-          className={`w-full h-full text-center uppercase bg-transparent focus:outline-none focus:ring-2 focus:ring-orange-400 text-base sm:text-lg md:text-xl font-bold ${
-            isCorrect === true
-              ? "text-green-600"
-              : isCorrect === false
-              ? "text-red-600"
-              : isHighlighted
-              ? "text-black"
-              : "text-gray-800"
-          }`}
-          value={value || ""}
+          style={{ fontSize: 'calc(var(--cell) * 0.44)' }}
+          className="w-full h-full text-center uppercase bg-transparent focus:outline-none font-bold text-gray-900"
+          value={value || ''}
           onChange={onChange}
+          onKeyDown={onKeyDown}
         />
-      ) : null}
+      ) : (
+        <div className="w-full h-full"></div>
+      )}
     </div>
   );
 }
 
 export default function CrosswordPuzzle({ onComplete }) {
   const [grid, setGrid] = useState({});
+  const scrollerRef = useRef(null);
 
   const expanded = useMemo(() => expandEntries(ENTRIES), []);
 
-  const { solution, activeSet, startNumbers } = useMemo(() => {
+  // build orientation map so we can prefer vertical auto-move when appropriate
+  const { solution, activeSet, startNumbers, orientation } = useMemo(() => {
     const sol = {};
     const act = new Set();
+    const orientation = {};
     const starts = new Map();
     for (const e of expanded) {
       const [sr, sc] = e.start;
@@ -117,15 +117,29 @@ export default function CrosswordPuzzle({ onComplete }) {
         const key = `${r}-${c}`;
         sol[key] = e.answer[i];
         act.add(key);
+        // determine direction for this entry cell
+        const next = e.cells[i + 1];
+        const prev = e.cells[i - 1];
+        const vert = (next && next[1] === c) || (prev && prev[1] === c);
+        const horz = (next && next[0] === r) || (prev && prev[0] === r);
+        if (vert && horz) orientation[key] = 'both';
+        else if (vert) orientation[key] = 'vertical';
+        else orientation[key] = 'horizontal';
       }
     }
-    return { solution: sol, activeSet: act, startNumbers: starts };
+    return { solution: sol, activeSet: act, startNumbers: starts, orientation };
   }, [expanded]);
+
+  const orientationRef = useRef({});
+  useEffect(() => {
+    orientationRef.current = orientation || {};
+  }, [orientation]);
 
   const [solved, setSolved] = useState(false);
   const [highlightKeys, setHighlightKeys] = useState(new Set());
-  const solutionRef = useMemo(() => ({ current: {} }), []);
-  const activeSetRef = useMemo(() => ({ current: new Set() }), []);
+  const solutionRef = useRef({});
+  const activeSetRef = useRef(new Set());
+  const inputRefs = useRef({}); // map key -> ref
 
   useEffect(() => {
     if (!onComplete) return;
@@ -142,7 +156,12 @@ export default function CrosswordPuzzle({ onComplete }) {
   useEffect(() => {
     solutionRef.current = solution;
     activeSetRef.current = activeSet;
-  }, [solution, activeSet, solutionRef, activeSetRef]);
+  }, [solution, activeSet]);
+
+  // Ensure the crossword starts scrolled all the way to the left
+  useEffect(() => {
+    if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
+  }, []);
 
   // After solved, explicitly highlight the requested letters so they appear reliably.
   // Requested: Y of STRATEGY, A of STARTUP, one F of BUFFETT, O of MICROSOFT, and L of LEVERAGE
@@ -167,6 +186,121 @@ export default function CrosswordPuzzle({ onComplete }) {
     const key = `${row}-${col}`;
     if (!activeSet.has(key)) return;
     setGrid((p) => ({ ...p, [key]: val }));
+    // auto-move after typing a letter. prefer vertical move if this cell is part of a vertical entry
+    if (val) {
+      const key = `${row}-${col}`;
+      const orient = orientationRef.current[key];
+      // compute next key explicitly and focus it for more deterministic behavior
+      const findNextInColumn = () => {
+        let r = row + 1;
+        while (r >= 0 && r < MATRIX_ROWS) {
+          const k = `${r}-${col}`;
+          if (activeSet.has(k)) return k;
+          r += 1;
+        }
+        return null;
+      };
+
+      const findNextInRow = () => {
+        let c = col + 1;
+        while (c >= 0 && c < MATRIX_COLS) {
+          const k = `${row}-${c}`;
+          if (activeSet.has(k)) return k;
+          c += 1;
+        }
+        return null;
+      };
+
+      setTimeout(() => {
+        const nextKey = (orient === 'vertical' || orient === 'both') ? findNextInColumn() : findNextInRow();
+        if (nextKey) {
+          const el = inputRefs.current[nextKey];
+          if (el && el.focus) el.focus();
+        }
+      }, 0);
+    }
+  };
+
+  // focus management helpers
+  const focusCell = (key) => {
+    const ref = inputRefs.current[key];
+    if (ref && ref.focus) ref.focus();
+  };
+
+  const moveVertically = (row, col, dir) => {
+    // dir: -1 (up) or 1 (down)
+    let r = row + dir;
+    while (r >= 0 && r < MATRIX_ROWS) {
+      const k = `${r}-${col}`;
+      if (activeSet.has(k)) {
+        focusCell(k);
+        return;
+      }
+      r += dir;
+    }
+  };
+
+  const moveHorizontally = (row, col, dir) => {
+    let c = col + dir;
+    while (c >= 0 && c < MATRIX_COLS) {
+      const k = `${row}-${c}`;
+      if (activeSet.has(k)) {
+        focusCell(k);
+        return;
+      }
+      c += dir;
+    }
+  };
+
+  const handleKeyDownFactory = (row, col) => (e) => {
+    // Backspace behavior: if current cell has a value, clear it and stay;
+    // otherwise move to previous active cell (left) and clear it.
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const curKey = `${row}-${col}`;
+      const hasVal = !!(grid[curKey] && grid[curKey].length);
+      if (hasVal) {
+        setGrid((p) => ({ ...p, [curKey]: '' }));
+        return;
+      }
+      // find previous active cell to the left; if none, try upward in same column
+      let c = col - 1;
+      while (c >= 0) {
+        const k = `${row}-${c}`;
+        if (activeSet.has(k)) {
+          // focus and clear
+          if (inputRefs.current[k] && inputRefs.current[k].focus) inputRefs.current[k].focus();
+          setGrid((p) => ({ ...p, [k]: '' }));
+          return;
+        }
+        c -= 1;
+      }
+      // fallback: try previous active in column
+      let r = row - 1;
+      while (r >= 0) {
+        const k = `${r}-${col}`;
+        if (activeSet.has(k)) {
+          if (inputRefs.current[k] && inputRefs.current[k].focus) inputRefs.current[k].focus();
+          setGrid((p) => ({ ...p, [k]: '' }));
+          return;
+        }
+        r -= 1;
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveVertically(row, col, -1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      moveVertically(row, col, 1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      moveHorizontally(row, col, -1);
+    } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      e.preventDefault();
+      moveHorizontally(row, col, 1);
+    }
   };
 
   const cells = Array.from({ length: MATRIX_ROWS }, (_, r) =>
@@ -174,30 +308,49 @@ export default function CrosswordPuzzle({ onComplete }) {
       const key = `${r}-${c}`;
       const active = activeSet.has(key);
       const number = startNumbers.get(key) || null;
-      const isCorrect = grid[key] ? (solution[key] ? grid[key] === solution[key] : false) : undefined;
-      return { row: r, col: c, key, active, number, isCorrect };
+      return { row: r, col: c, key, active, number };
     })
   );
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-5xl mx-auto">
-      <div className="flex justify-center overflow-x-auto">
-        <div className="bg-gray-50 p-3 sm:p-4 rounded-lg shadow-sm border min-w-fit">
-          <div className="grid mx-auto" style={{ gridTemplateColumns: `repeat(${MATRIX_COLS}, clamp(2rem, 4vw, 3.5rem))` }}>
-            {cells.flat().map(({ row, col, key, active, number, isCorrect }) => (
-              <CrosswordCell
-                key={key}
-                number={number}
-                value={grid[key] || ""}
-                isActive={active}
-                isCorrect={isCorrect}
-                isHighlighted={highlightKeys.has(key)}
-                onChange={(e) => handleChange(row, col, e)}
-              />
-            ))}
+      <div ref={scrollerRef} className="overflow-x-auto">
+        <div className="bg-gray-50 p-3 sm:p-4 rounded-lg shadow-sm border inline-block w-max">
+          {/* define --cell so the grid and cells scale together */}
+          <div style={{ ['--cell']: '2.8rem' }}>
+            <div
+              className="crossword-grid grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${MATRIX_COLS}, var(--cell))`,
+                width: 'max-content'
+              }}
+            >
+            {cells.flat().map(({ row, col, key, active, number }) => {
+              if (active && !inputRefs.current[key]) inputRefs.current[key] = { focus: () => {} };
+              return (
+                <div className="crossword-cell" key={key} style={{ width: 'var(--cell)', height: 'var(--cell)' }}>
+                  <CrosswordCell
+                  key={key}
+                  dataKey={key}
+                  number={number}
+                  value={grid[key] || ""}
+                  isActive={active}
+                  isHighlighted={highlightKeys.has(key)}
+                  inputRef={(el) => {
+                    if (!el) return;
+                    // store the actual DOM focusable element
+                    inputRefs.current[key] = el;
+                  }}
+                  onKeyDown={handleKeyDownFactory(row, col)}
+                  onChange={(e) => handleChange(row, col, e)}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
+    </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
