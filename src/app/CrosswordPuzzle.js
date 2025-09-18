@@ -149,7 +149,10 @@ export default function CrosswordPuzzle({ onComplete }) {
     const allFilled = keys.every((k) => grid[k] && grid[k].length === 1);
     const allCorrect = keys.every((k) => grid[k] === solution[k]);
     if (allFilled && allCorrect) {
-      onComplete && onComplete();
+      // Snapshot only the active cells to send for server verification
+      const snap = {};
+      for (const k of keys) snap[k] = (grid[k] || '').toUpperCase();
+      onComplete && onComplete(snap);
       setSolved(true);
     }
   }, [grid, activeSet, solution, onComplete]);

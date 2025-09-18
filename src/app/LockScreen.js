@@ -78,11 +78,6 @@ export default function LockScreen() {
         </form>
 
         {error ? <p className="error">{error}</p> : null}
-
-        <div className="bonus">
-          <span className="bonus-label">Bonus hint:</span>
-          <span className="bonus-text">The 3rd comment might matter later… keep an eye out.</span>
-        </div>
       </div>
       <div className="vignette" />
     </div>

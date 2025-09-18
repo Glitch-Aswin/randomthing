@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-// Server-side password for the crossword page. Configure with PAGE_ACCESS_PASSWORD,
-// defaulting to 'fayol' as requested. Kept separate from /api/unlock.
+// Server-side access key for the page. Configure with PAGE_ACCESS_PASSWORD,
+// defaulting to 'fayol'. Kept separate from /api/unlock.
 export async function POST(request) {
   try {
     const body = await request.json()

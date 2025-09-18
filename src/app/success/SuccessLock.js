@@ -40,26 +40,11 @@ export default function SuccessLock() {
     <div className="lockscreen overlay">
       <div className="glass-card">
         <Image src="/padlock.svg" width={56} height={56} className="padlock" alt="Locked" />
-        <h1 className="title">TRESPASS CHECKING!</h1>
-        <p className="subtitle">Enter the secret you figured out before, just to make you are not tresspassing over this page ^_^</p>
+  <h1 className="title">TRESPASS CHECKING!</h1>
+  <p className="subtitle">This page unlocks only after solving the crossword. Return to the puzzle and complete it to proceed.</p>
 
         <form onSubmit={handleSubmit} className="form">
-          <label htmlFor="success-password" className="sr-only">Password</label>
-          <div className="password-wrapper">
-            <input
-              id="success-password"
-              ref={inputRef}
-              type="password"
-              value={password}
-              onChange={(e) => { setError(''); setPassword(e.target.value) }}
-              placeholder="********"
-              className="password-input"
-              autoFocus
-            />
-          </div>
-          <button className="submit" disabled={loading}>
-            {loading ? 'Checking…' : 'Unlock'}
-          </button>
+          <a href="/" className="submit">Go to Puzzle</a>
         </form>
 
         {error ? <p className="error">{error}</p> : null}
