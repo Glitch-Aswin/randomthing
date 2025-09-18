@@ -33,6 +33,8 @@ const CLUE_TEXTS = {
   across: {
     1: "Which financial ratio indicates the extent to which a company uses debt to finance assets?",
     3: 'The "Oracle of Omaha"',
+    5: "This entrepreneur's Sneaker resale empire made Wall Street sweat",
+    7: "His garage startup redefined personal computing"
   }
 };
 
