@@ -46,7 +46,7 @@ export default function SuccessPage() {
           />
         </div>
         <h1 className="text-3xl font-extrabold text-orange-400">Final Gate</h1>
-        <p className="text-sm text-white/80">Unscramble the letters and enter the business-related name:</p>
+        <p className="text-sm text-white/80">Unscramble the letters and enter the key:</p>
         <div className="text-2xl tracking-widest font-bold text-orange-300">{scrambled}</div>
 
         <form onSubmit={submit} className="flex gap-2 items-stretch justify-center">
