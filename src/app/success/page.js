@@ -24,7 +24,7 @@ export default function SuccessPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || 'Invalid password');
       }
-      window.location.href = 'https://youtu.be/dQw4w9WgXcQ?si=IQH6cBlxZYnxdLG7';
+      window.location.href = 'https://youtube.com/shorts/QHwFKt-O--w?si=DwjO91M3MkKZZENP';
     } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
